@@ -37,6 +37,8 @@ BASE_URL = "https://map.naver.com/p/search/"
 # 셀레니움 드라이버 설정
 @st.cache_resource
 def setup_driver():
+    import os
+    
     options = Options()
     options.add_argument('--headless')
     options.add_argument('--no-sandbox')
@@ -45,13 +47,18 @@ def setup_driver():
     options.add_argument('--log-level=3')
     options.add_argument("user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/100.0.4896.127 Safari/537.36")
     
-    # Streamlit Cloud 환경에서 추가 설정
-    options.add_argument('--remote-debugging-port=9222')
+    # 클라우드 환경에서 추가 설정
+    if 'STREAMLIT_SHARING' in os.environ or 'DYNO' in os.environ:
+        options.add_argument('--remote-debugging-port=9222')
+        # 일부 클라우드 환경에서는 webdriver-manager가 제대로 작동하지 않을 수 있음
+        driver = webdriver.Chrome(options=options)
+    else:
+        # 로컬 환경에서는 webdriver-manager 사용
+        driver = webdriver.Chrome(
+            service=Service(ChromeDriverManager().install()),
+            options=options
+        )
     
-    driver = webdriver.Chrome(
-        service=Service(ChromeDriverManager().install()),
-        options=options
-    )
     return driver
 
 # 네이버 지도 URL 생성
